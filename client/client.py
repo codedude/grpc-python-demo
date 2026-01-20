@@ -17,7 +17,9 @@ logging.basicConfig(level=logging.DEBUG)
 def get_snapshot(app_client: grpc_client.WeatherStationClient) -> None:
     time_now = datetime.datetime.now()
     response = app_client.GetSnapshot(
-        start_time=time_now, end_time=time_now + datetime.timedelta(days=1)
+        start_time=time_now,
+        end_time=time_now + datetime.timedelta(days=1),
+        access_token="montreal-python",
     )
     if response.error:
         print(f"Error from server: {response.error.code} - {response.error.details}")
@@ -27,7 +29,36 @@ def get_snapshot(app_client: grpc_client.WeatherStationClient) -> None:
 
 def get_snapshot_error(app_client: grpc_client.WeatherStationClient) -> None:
     time_now = datetime.datetime.now()
-    response = app_client.GetSnapshot(start_time=time_now, end_time=time_now)
+    response = app_client.GetSnapshot(
+        start_time=time_now, end_time=time_now, access_token="montreal-python"
+    )
+    if response.error:
+        print(f"Error from server: {response.error.code} - {response.error.details}")
+    else:
+        print(f"Response from server: {response}")
+
+
+def get_snapshot_wait(app_client: grpc_client.WeatherStationClient) -> None:
+    time_now = datetime.datetime.now()
+    response = app_client.GetSnapshot(
+        start_time=time_now,
+        end_time=time_now + datetime.timedelta(days=1),
+        access_token="montreal-python",
+        wait_for_ready=True,
+    )
+    if response.error:
+        print(f"Error from server: {response.error.code} - {response.error.details}")
+    else:
+        print(f"Response from server: {response}")
+
+
+def get_snapshot_header(app_client: grpc_client.WeatherStationClient) -> None:
+    time_now = datetime.datetime.now()
+    response = app_client.GetSnapshot(
+        start_time=time_now,
+        end_time=time_now + datetime.timedelta(days=1),
+        access_token="bad-token",
+    )
     if response.error:
         print(f"Error from server: {response.error.code} - {response.error.details}")
     else:
@@ -69,7 +100,9 @@ if __name__ == "__main__":
         help="What function to run",
         choices=[
             "health_check",
-            "simple_rpc",
+            "simple",
+            "wait",
+            "header",
             "error",
             "server_stream",
             "client_stream",
@@ -78,8 +111,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     match args.action:
-        case "simple_rpc":
+        case "simple":
             get_snapshot(app_client)
+        case "wait":
+            get_snapshot_wait(app_client)
+        case "header":
+            get_snapshot_header(app_client)
         case "error":
             get_snapshot_error(app_client)
         case "server_stream":

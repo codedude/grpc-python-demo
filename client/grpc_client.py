@@ -24,7 +24,15 @@ class WeatherStationClient(object):
 
     def instantiate(self) -> bool:
         try:
-            channel = grpc.insecure_channel(f"{self._host}:{self._port}")
+            channel = grpc.insecure_channel(
+                target=f"{self._host}:{self._port}",
+                options=(
+                    ("grpc.keepalive_time_ms", 8000),
+                    ("grpc.keepalive_timeout_ms", 5000),
+                    ("grpc.http2.max_pings_without_data", 5),
+                    ("grpc.keepalive_permit_without_calls", 1),
+                ),
+            )
             self._stub = pb2_grpc.WeatherStationStub(channel)
             self._health_stub = health_pb2_grpc.HealthStub(channel)
         except Exception as e:
@@ -34,11 +42,17 @@ class WeatherStationClient(object):
         return True
 
     def GetSnapshot(
-        self, start_time: datetime.datetime, end_time: datetime.datetime
+        self,
+        start_time: datetime.datetime,
+        end_time: datetime.datetime,
+        access_token: str,
+        wait_for_ready=None,
     ) -> helpers.ApiResponse:
         try:
             response = self._stub.GetSnapshot(
-                request=sub_pb2.RequestReport(start_time=start_time, end_time=end_time)
+                request=sub_pb2.RequestReport(start_time=start_time, end_time=end_time),
+                wait_for_ready=wait_for_ready,
+                metadata=(("accesstoken", access_token),),
             )
         except grpc.RpcError as e:
             return helpers.error_response(e)

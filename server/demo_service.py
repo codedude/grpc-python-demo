@@ -17,15 +17,28 @@ class WeatherStationService(pb2_grpc.WeatherStationServicer):
     def __init__(self):
         logger.info("Service initialized")
 
-    def GetSnapshot(self, request: pb2_sub.RequestReport, context):
+    def GetSnapshot(self, request: pb2_sub.RequestReport, context: grpc.RpcContext):
         """GetSnapshot, client asks a report to server"""
+        authenticated = False
+        for key, value in context.invocation_metadata():
+            if key == "accesstoken":
+                if value != "montreal-python":
+                    context.set_code(grpc.StatusCode.UNAUTHENTICATED)
+                    context.set_details("bad access token")
+                    return None
+                else:
+                    authenticated = True
+        if not authenticated:
+            context.set_code(grpc.StatusCode.UNAUTHENTICATED)
+            context.set_details("no access token")
+            return None
         if (
             not request.start_time.IsInitialized()
             or not request.end_time.IsInitialized()
         ):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details("start_time and end_time must be set")
-            return pb2_sub.ReportResponse()
+            return None
         start_time = request.start_time.ToDatetime(tzinfo=datetime.timezone.utc)
         end_time = request.end_time.ToDatetime(tzinfo=datetime.timezone.utc)
         if (
@@ -36,7 +49,7 @@ class WeatherStationService(pb2_grpc.WeatherStationServicer):
             context.set_details(
                 "start_time must be old than now, and different from end_time"
             )
-            return pb2_sub.ReportResponse()
+            return None
         reports = generate_reports(10)
         context.set_code(grpc.StatusCode.OK)
         return reports
