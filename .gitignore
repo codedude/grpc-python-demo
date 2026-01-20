@@ -1,3 +1,6 @@
+# Custom
+pb/generated
+
 # proto gen
 pb/*.py
 pb/*.pyi
