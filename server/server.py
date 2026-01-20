@@ -1,27 +1,27 @@
+#!/bin/python
+
 import logging
 import sys
+import signal
 
-import hello_service
+import demo_service
 import grpc_server
 
 logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 
 def start_server(host: str, port: str) -> int:
     server = grpc_server.GRPCServer(host, port)
-    ret = server.config(hello_service.HelloService())
-    if not ret:
-        return 1
-
+    if not server.config(demo_service.WeatherStationService()):
+        return -1
+    signal.signal(signal.SIGINT, lambda s, f: server.stop())
     ret = server.start()
     if not ret:
-        return 1
-
+        return -1
     server.stop()
-
     return 0
 
 
-if __name__ == '__main__':
-    sys.exit(start_server(host="0.0.0.0", port="8042"))
+if __name__ == "__main__":
+    sys.exit(start_server(host="[::]", port="4242"))

@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/any.proto";
+
+enum ActionType{
+  ACTION_TYPE_UNKNOWN = 0;
+  ACTION_TYPE_RESTART = 1;
+  ACTION_TYPE_STOP    = 2;
+  ACTION_TYPE_DELETE  = 3;
+}
+
+enum WarningMsgType {
+  WARNING_TYPE_UNKNOWN  = 0;
+  WARNING_TYPE_HOT      = 1;
+  WARNING_TYPE_HUMIDITY = 2;
+  WARNING_TYPE_PRESSURE = 3;
+}
+
+message Measure {
+  optional float            temp     = 1;
+  optional uint32           humidity = 2;
+  optional int32            pressure = 3;
+  google.protobuf.Timestamp time     = 4;
+}
+
+message WarningMsg {
+  google.protobuf.Timestamp    time    = 1;
+  WarningMsgType               type    = 2;
+  repeated google.protobuf.Any details = 3;
+}
+
+message ReportResponse {
+  repeated Measure measures = 1;
+}
+
+message WarningResponse {
+  repeated WarningMsg warnings = 1;
+}
+
+message RequestReport {
+  google.protobuf.Timestamp start_time = 1;
+  reserved 2 to 4;
+  reserved "finish_time";
+  google.protobuf.Timestamp end_time = 5;
+}
+
+message RequestSetConfig {
+  oneof measure_interval {
+    google.protobuf.Duration  interval = 1;
+    google.protobuf.Timestamp time     = 2;
+  }
+}
+
+message RequestAction {
+  pb.ActionType action = 1;
+}
+
+message ApiResponse {
+  optional int32  code  = 1; // default: 0 = no error code
+  optional string msg   = 2;
+  optional string field = 3;
+}

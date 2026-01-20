@@ -1,0 +1,27 @@
+// What protobuf version
+syntax = "proto3";
+
+// Package name for imports in proto files
+package pb;
+
+// Import your proto files or use standard google files
+// for example: homebrew/include/google/protobuf/timestamp.proto
+import "pb/generated/sub/sub_demo.proto";
+import "google/protobuf/empty.proto";
+
+// Language specific options
+option go_package = "path/to/package";
+option csharp_namespace = "Namespace";
+
+// WeatherStation
+service WeatherStation {
+  // GetSnapshot, client asks a report to server
+  rpc GetSnapshot (RequestReport) returns (ReportResponse) {};
+  // SendMeasurements, server sends live measures to client
+  rpc SendMeasurements (google.protobuf.Empty) returns (stream Measure) {};
+  // FillMeasurements, client sends missing/new measures to server
+  rpc FillMeasurements (stream Measure) returns (ApiResponse) {};
+  // Monitor, client sends live measures, server responds with live warning
+  rpc Monitor (stream Measure) returns (stream WarningResponse) {};
+
+}
