@@ -15,7 +15,7 @@ build_pb:
 		$(PB_SRC_FILES)
 	@echo "... done!"
 
-.PHONY: start_server, start_client, build_pb, pb_demo
+.PHONY: start_server, start_client, build_pb, pb_demo, type_demo
 
 start_server:
 	@echo "Starting server..."
@@ -28,3 +28,6 @@ start_client:
 
 pb_demo:
 	@PYTHONPATH=./:$(PYTHONPATH) python pb_demo.py
+
+type_demo:
+	@PYTHONPATH=./:$(PYTHONPATH) python type_demo.py
