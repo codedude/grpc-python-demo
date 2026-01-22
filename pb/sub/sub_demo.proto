@@ -23,7 +23,7 @@ enum WarningMsgType {
 message Measure {
   optional float            temp     = 1;
   optional uint32           humidity = 2;
-  optional int32            pressure = 3;
+  int32            pressure = 3;
   google.protobuf.Timestamp time     = 4;
 }
 
@@ -53,6 +53,7 @@ message RequestSetConfig {
     google.protobuf.Duration  interval = 1;
     google.protobuf.Timestamp time     = 2;
   }
+  map<string, Measure> data = 3;
 }
 
 message RequestAction {
