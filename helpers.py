@@ -1,7 +1,7 @@
 import datetime
 import grpc
 from types import SimpleNamespace
-from typing import List, Generator, Dict, Optional, Protocol
+from typing import Generator, Dict, Optional, Protocol
 from google.protobuf.json_format import MessageToDict
 from google.protobuf.message import Message
 
@@ -49,7 +49,7 @@ def success_response(response: Message) -> ApiResponse:
     )
 
 
-def generate_reports(n: int = 100) -> List[ReportResponse]:
+def generate_reports(n: int = 100) -> ReportResponse:
     if n < 0 or n > 1000:
         raise RuntimeError(f"Cannot generate {n} reports")
     report = ReportResponse()

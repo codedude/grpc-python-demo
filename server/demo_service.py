@@ -17,7 +17,9 @@ class WeatherStationService(pb2_grpc.WeatherStationServicer):
     def __init__(self):
         logger.info("Service initialized")
 
-    def GetSnapshot(self, request: pb2_sub.RequestReport, context: grpc.RpcContext):
+    def GetSnapshot(
+        self, request: pb2_sub.RequestReport, context: grpc.RpcContext
+    ) -> pb2_sub.ReportResponse:
         """GetSnapshot, client asks a report to server"""
         authenticated = False
         for key, value in context.invocation_metadata():
@@ -54,23 +56,27 @@ class WeatherStationService(pb2_grpc.WeatherStationServicer):
         context.set_code(grpc.StatusCode.OK)
         return reports
 
-    def SendMeasurements(self, request, context):
+    def SendMeasurements(self, request, context: grpc.RpcContext) -> None:
         """SendMeasurements, server sends live measures to client"""
         for measure in yield_measures(10):
+            logger.debug("send measure")
             yield measure
             time.sleep(1)
         context.set_code(grpc.StatusCode.OK)
 
-    def FillMeasurements(self, request_iterator, context):
+    def FillMeasurements(
+        self, request_iterator, context: grpc.RpcContext
+    ) -> pb2_sub.ApiResponse:
         """FillMeasurements, client sends missing/new measures to server"""
         for measure in request_iterator:
             logger.info(measure)
         context.set_code(grpc.StatusCode.OK)
         return pb2_sub.ApiResponse(code=0, msg="success")
 
-    def Monitor(self, request_iterator: Generator[pb2_sub.Measure], context):
+    def Monitor(self, request_iterator: Generator[pb2_sub.Measure], context) -> None:
         """Monitor, client sends live measures, server responds with live warning"""
         for measure in request_iterator:
+            logger.debug(measure)
             if measure.humidity > 6:
                 yield pb2_sub.WarningResponse(
                     warnings=[
