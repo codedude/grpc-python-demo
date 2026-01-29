@@ -8,7 +8,7 @@ import datetime
 import time
 import argparse
 
-from helpers import yield_measures
+from helpers import gen_measures
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -34,8 +34,6 @@ def get_snapshot_error(app_client: grpc_client.WeatherStationClient) -> None:
     )
     if response.error:
         print(f"Error from server: {response.error.code} - {response.error.details}")
-    else:
-        print(f"Response from server: {response}")
 
 
 def get_snapshot_wait(app_client: grpc_client.WeatherStationClient) -> None:
@@ -48,8 +46,6 @@ def get_snapshot_wait(app_client: grpc_client.WeatherStationClient) -> None:
     )
     if response.error:
         print(f"Error from server: {response.error.code} - {response.error.details}")
-    else:
-        print(f"Response from server: {response}")
 
 
 def get_snapshot_header(app_client: grpc_client.WeatherStationClient) -> None:
@@ -61,24 +57,20 @@ def get_snapshot_header(app_client: grpc_client.WeatherStationClient) -> None:
     )
     if response.error:
         print(f"Error from server: {response.error.code} - {response.error.details}")
-    else:
-        print(f"Response from server: {response}")
 
 
 def send_measurements(app_client: grpc_client.WeatherStationClient) -> None:
     for r in app_client.SendMeasurements():
-        print(f"Response from server: {r}")
+        pass
 
 
 def fill_measurments(app_client: grpc_client.WeatherStationClient) -> None:
-    r = app_client.FillMeasurements(yield_measures(10))
-    print(f"Response from server: {r}")
+    r = app_client.FillMeasurements(gen_measures(10))
 
 
 def monitor(app_client: grpc_client.WeatherStationClient) -> None:
-    for r in app_client.Monitor(yield_measures(10)):
-        print(f"Response from server: {r}")
-        time.sleep(1)
+    for r in app_client.Monitor(gen_measures(10)):
+        pass
 
 
 def health_check(app_client: grpc_client.WeatherStationClient) -> None:
@@ -86,7 +78,7 @@ def health_check(app_client: grpc_client.WeatherStationClient) -> None:
 
 
 if __name__ == "__main__":
-    app_client = grpc_client.WeatherStationClient(host="127.0.0.1", port="4242")
+    app_client = grpc_client.WeatherStationClient(host="[::]", port="4242")
     if not app_client.instantiate():
         logger.critical("Cannot instantiate client")
         sys.exit(1)

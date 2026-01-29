@@ -1,9 +1,6 @@
-# Custom
-pb/generated
-
 # proto gen
-pb/*.py
-pb/*.pyi
+pb/**/*.py
+pb/**/*.pyi
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

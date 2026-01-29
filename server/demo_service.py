@@ -4,22 +4,22 @@ import datetime
 import grpc
 from typing import Generator
 
-import pb.generated.sub.sub_demo_pb2 as pb2_sub
-import pb.generated.demo_pb2_grpc as pb2_grpc
+import pb.sub.sub_demo_pb2 as pb_sub_demo
+import pb.demo_pb2_grpc as pb_demo
 
-from helpers import generate_reports, yield_measures
+from helpers import create_report, gen_measures
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
-class WeatherStationService(pb2_grpc.WeatherStationServicer):
+class WeatherStationService(pb_demo.WeatherStationServicer):
     def __init__(self):
         logger.info("Service initialized")
 
     def GetSnapshot(
-        self, request: pb2_sub.RequestReport, context: grpc.RpcContext
-    ) -> pb2_sub.ReportResponse:
+        self, request: pb_sub_demo.RequestReport, context: grpc.RpcContext
+    ) -> pb_sub_demo.ReportResponse:
         """GetSnapshot, client asks a report to server"""
         authenticated = False
         for key, value in context.invocation_metadata():
@@ -52,38 +52,44 @@ class WeatherStationService(pb2_grpc.WeatherStationServicer):
                 "start_time must be old than now, and different from end_time"
             )
             return None
-        reports = generate_reports(10)
+        reports = create_report(10)
         context.set_code(grpc.StatusCode.OK)
+        logger.debug("Report ready to send!")
         return reports
 
     def SendMeasurements(self, request, context: grpc.RpcContext) -> None:
         """SendMeasurements, server sends live measures to client"""
-        for measure in yield_measures(10):
-            logger.debug("send measure")
+        for i, measure in enumerate(gen_measures(10)):
+            logger.debug(f"Sending measure {i} to client...")
             yield measure
             time.sleep(1)
         context.set_code(grpc.StatusCode.OK)
+        logger.debug("All measures sent!")
 
     def FillMeasurements(
         self, request_iterator, context: grpc.RpcContext
-    ) -> pb2_sub.ApiResponse:
+    ) -> pb_sub_demo.ApiResponse:
         """FillMeasurements, client sends missing/new measures to server"""
-        for measure in request_iterator:
-            logger.info(measure)
+        for i, measure in enumerate(request_iterator):
+            logger.debug(f"Receiving measure {i} from client...")
         context.set_code(grpc.StatusCode.OK)
-        return pb2_sub.ApiResponse(code=0, msg="success")
+        logger.debug("All measures received!")
+        return pb_sub_demo.ApiResponse(code=0, msg="success")
 
-    def Monitor(self, request_iterator: Generator[pb2_sub.Measure], context) -> None:
+    def Monitor(self, request_iterator: Generator[pb_sub_demo.Measure], context) -> None:
         """Monitor, client sends live measures, server responds with live warning"""
-        for measure in request_iterator:
-            logger.debug(measure)
+        logger.debug(f"Start Monitor...")
+        for i, measure in enumerate(request_iterator):
+            logger.debug(f"Receiving measure {i} from client...")
             if measure.humidity > 6:
-                yield pb2_sub.WarningResponse(
+                logger.debug("Send warning to client")
+                yield pb_sub_demo.WarningResponse(
                     warnings=[
-                        pb2_sub.WarningMsg(
+                        pb_sub_demo.WarningMsg(
                             time=datetime.datetime.now(datetime.timezone.utc),
-                            type=pb2_sub.WARNING_TYPE_HUMIDITY,
+                            type=pb_sub_demo.WARNING_TYPE_HUMIDITY,
                         )
                     ]
                 )
         context.set_code(grpc.StatusCode.OK)
+        logger.debug("... Monitor ended!")

@@ -57,7 +57,7 @@ message RequestSetConfig {
 }
 
 message RequestAction {
-  pb.ActionType action = 1;
+  ActionType action = 1;
 }
 
 message ApiResponse {

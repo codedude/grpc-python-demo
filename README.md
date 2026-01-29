@@ -18,3 +18,13 @@ make start_server&
 # Start client
 make start_client ARGS="simple"
 ```
+
+## TODO
+
+### gRPC
+
+- Mock server with interceptor
+
+### Protocol Buffers
+
+- code examples in presentation

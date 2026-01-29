@@ -1,12 +1,10 @@
-// What protobuf version
 syntax = "proto3";
 
 // Package name for imports in proto files
 package pb;
 
-// Import your proto files or use standard google files
-// for example: homebrew/include/google/protobuf/timestamp.proto
-import "pb/generated/sub/sub_demo.proto";
+// Import your proto files and/or use standard google files
+import "pb/sub/sub_demo.proto";
 import "google/protobuf/empty.proto";
 
 // Language specific options

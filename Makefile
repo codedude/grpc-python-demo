@@ -7,8 +7,9 @@ PB_SRC_FILES= pb/sub/sub_demo.proto pb/demo.proto
 #	It also change the import path in .proto files
 build_pb:
 	@echo "Compiling proto files..."
+	@find ./pb -name "*.py*" -delete
 	@python -m grpc_tools.protoc --fatal_warnings \
-		-Ipb/generated=./pb -I googleapis\
+		-I ./ -I googleapis/ -I protobuf/src/\
 		--python_out=./ \
 		--grpc_python_out=./ \
 		--pyi_out=./ \
@@ -20,6 +21,7 @@ build_pb:
 start_server:
 	@echo "Starting server..."
 	@PYTHONPATH=./:$(PYTHONPATH) python server/server.py
+	@echo "... done!"
 
 start_client:
 	@echo "Starting client..."

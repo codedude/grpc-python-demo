@@ -1,6 +1,6 @@
 import sys
 
-from pb.generated.sub.sub_demo_pb2 import ReportResponse
+from pb.sub.sub_demo_pb2 import ReportResponse
 
 
 def optional_field():

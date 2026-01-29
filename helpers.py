@@ -5,7 +5,7 @@ from typing import Generator, Dict, Optional, Protocol
 from google.protobuf.json_format import MessageToDict
 from google.protobuf.message import Message
 
-from pb.generated.sub.sub_demo_pb2 import ReportResponse, Measure
+from pb.sub.sub_demo_pb2 import ReportResponse, Measure
 
 
 class ApiError(Protocol):
@@ -49,8 +49,8 @@ def success_response(response: Message) -> ApiResponse:
     )
 
 
-def generate_reports(n: int = 100) -> ReportResponse:
-    if n < 0 or n > 1000:
+def create_report(n: int = 10) -> ReportResponse:
+    if n < 0 or n > 1000000:
         raise RuntimeError(f"Cannot generate {n} reports")
     report = ReportResponse()
     for i in range(n):
@@ -64,8 +64,8 @@ def generate_reports(n: int = 100) -> ReportResponse:
     return report
 
 
-def yield_measures(n: int = 100) -> Generator[Measure]:
-    if n < 0 or n > 1000:
+def gen_measures(n: int = 10) -> Generator[Measure]:
+    if n < 0 or n > 1000000:
         raise RuntimeError(f"Cannot generate {n} measures")
     for i in range(n):
         yield Measure(
