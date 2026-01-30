@@ -49,6 +49,15 @@ def success_response(response: Message) -> ApiResponse:
     )
 
 
+def success_response_mock(response: Message) -> ApiResponse:
+    return SimpleNamespace(
+        **{
+            "response": response,
+            "error": None,
+        }
+    )
+
+
 def create_report(n: int = 10) -> ReportResponse:
     if n < 0 or n > 1000000:
         raise RuntimeError(f"Cannot generate {n} reports")

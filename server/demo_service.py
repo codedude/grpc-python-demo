@@ -58,10 +58,10 @@ class WeatherStationService(pb_demo.WeatherStationServicer):
                 "start_time must be old than now, and different from end_time"
             )
             return None
-        reports = create_report(10)
+        report = create_report(10)
         context.set_code(grpc.StatusCode.OK)
         logger.debug("Report ready to send!")
-        return reports
+        return report
 
     def SendMeasurements(self, request, context: grpc.RpcContext) -> None:
         """SendMeasurements, server sends live measures to client"""

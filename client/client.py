@@ -1,14 +1,13 @@
 #!/bin/python
 
-import grpc
 import sys
 import logging
 import grpc_client
 import datetime
-import time
 import argparse
 
 from helpers import gen_measures
+from client_mock import WeatherStationStubMock
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -79,7 +78,7 @@ def health_check(app_client: grpc_client.WeatherStationClient) -> None:
 
 if __name__ == "__main__":
     app_client = grpc_client.WeatherStationClient(host="[::]", port="4242")
-    if not app_client.instantiate():
+    if not app_client.instantiate(stub=WeatherStationStubMock):
         logger.critical("Cannot instantiate client")
         sys.exit(1)
     parser = argparse.ArgumentParser(

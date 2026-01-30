@@ -23,7 +23,7 @@ make start_client ARGS="simple"
 
 ### gRPC
 
-- Mock server with interceptor
+- Server interceptor
 
 ### Protocol Buffers
 

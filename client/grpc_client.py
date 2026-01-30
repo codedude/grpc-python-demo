@@ -17,24 +17,23 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 service_config_json = json.dumps(
-        {
-            "methodConfig": [
-                {
-                    # To apply retry to all methods, put [{}] in the "name" field
-                    "name": [
-                        {"service": "demo.WeatherStation", "method": "GetSnapshot"}
-                    ],
-                    "retryPolicy": {
-                        "maxAttempts": 5,
-                        "initialBackoff": "0.1s",
-                        "maxBackoff": "1s",
-                        "backoffMultiplier": 2,
-                        "retryableStatusCodes": ["UNAVAILABLE"],
-                    },
-                }
-            ]
-        }
-    )
+    {
+        "methodConfig": [
+            {
+                # To apply retry to all methods, put [{}] in the "name" field
+                "name": [{"service": "demo.WeatherStation", "method": "GetSnapshot"}],
+                "retryPolicy": {
+                    "maxAttempts": 5,
+                    "initialBackoff": "0.1s",
+                    "maxBackoff": "1s",
+                    "backoffMultiplier": 2,
+                    "retryableStatusCodes": ["UNAVAILABLE"],
+                },
+            }
+        ]
+    }
+)
+
 
 class WeatherStationClient(object):
     def __init__(self, host: str, port: str) -> None:
@@ -43,7 +42,9 @@ class WeatherStationClient(object):
         self._stub = None
         self._health_stub = None
 
-    def instantiate(self) -> bool:
+    def instantiate(self, stub=pb_demo.WeatherStationStub) -> bool:
+        if not issubclass(stub, pb_demo.WeatherStationStub):
+            return False
         try:
             channel = grpc.insecure_channel(
                 target=f"{self._host}:{self._port}",
@@ -53,10 +54,10 @@ class WeatherStationClient(object):
                     ("grpc.http2.max_pings_without_data", 5),
                     ("grpc.keepalive_permit_without_calls", 1),
                     ("grpc.enable_retries", 1),
-                    ("grpc.service_config", service_config_json)
+                    ("grpc.service_config", service_config_json),
                 ),
             )
-            self._stub = pb_demo.WeatherStationStub(channel)
+            self._stub = stub(channel)
             self._health_stub = health_pb2_grpc.HealthStub(channel)
         except Exception as e:
             logger.error(f"instantiate(): {e}")
@@ -73,19 +74,22 @@ class WeatherStationClient(object):
     ) -> helpers.ApiResponse:
         try:
             response = self._stub.GetSnapshot(
-                request=pb_sub_demo.RequestReport(start_time=start_time, end_time=end_time),
+                request=pb_sub_demo.RequestReport(
+                    start_time=start_time, end_time=end_time
+                ),
                 wait_for_ready=wait_for_ready,
                 metadata=(("accesstoken", access_token),),
             )
         except grpc.RpcError as e:
             return helpers.error_response(e)
         logger.debug("Report received from server!")
+        print(type(response))
         return helpers.success_response(response)
 
     def SendMeasurements(self) -> Generator[helpers.ApiResponse]:
         try:
             responses = self._stub.SendMeasurements(request=empty_pb2.Empty())
-            for i,measure in enumerate(responses):
+            for i, measure in enumerate(responses):
                 logger.debug(f"Received measure {i} from server")
                 yield helpers.success_response(measure)
         except grpc.RpcError as e:
@@ -108,7 +112,7 @@ class WeatherStationClient(object):
     ) -> Generator[helpers.ApiResponse]:
         logger.debug("Start Monitor...")
         try:
-            for i,response in enumerate(self._stub.Monitor(measures)):
+            for i, response in enumerate(self._stub.Monitor(measures)):
                 logger.debug("Received warning from server")
                 yield helpers.success_response(response)
         except grpc.RpcError as e:
