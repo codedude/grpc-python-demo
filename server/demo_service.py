@@ -2,7 +2,13 @@ import time
 import logging
 import datetime
 import grpc
+import threading
 from typing import Generator
+
+from concurrent import futures
+from grpc_health.v1 import health
+from grpc_health.v1 import health_pb2
+from grpc_health.v1 import health_pb2_grpc
 
 import pb.sub.sub_demo_pb2 as pb_sub_demo
 import pb.demo_pb2_grpc as pb_demo
@@ -76,9 +82,11 @@ class WeatherStationService(pb_demo.WeatherStationServicer):
         logger.debug("All measures received!")
         return pb_sub_demo.ApiResponse(code=0, msg="success")
 
-    def Monitor(self, request_iterator: Generator[pb_sub_demo.Measure], context) -> None:
+    def Monitor(
+        self, request_iterator: Generator[pb_sub_demo.Measure], context
+    ) -> None:
         """Monitor, client sends live measures, server responds with live warning"""
-        logger.debug(f"Start Monitor...")
+        logger.debug("Start Monitor...")
         for i, measure in enumerate(request_iterator):
             logger.debug(f"Receiving measure {i} from client...")
             if measure.humidity > 6:
@@ -93,3 +101,34 @@ class WeatherStationService(pb_demo.WeatherStationServicer):
                 )
         context.set_code(grpc.StatusCode.OK)
         logger.debug("... Monitor ended!")
+
+
+def _check_health(health_servicer: health.HealthServicer, service: str):
+    """
+    Emulate a HealthCheck fail every 3 calls
+    """
+    counter = 1
+    while True:
+        if counter % 3 == 0:
+            health_servicer.set(service, health_pb2.HealthCheckResponse.NOT_SERVING)
+        else:
+            health_servicer.set(service, health_pb2.HealthCheckResponse.SERVING)
+        counter += 1
+        time.sleep(1)
+
+
+def configure_health_server(server: grpc.Server):
+    health_servicer = health.HealthServicer(
+        experimental_non_blocking=True,
+        experimental_thread_pool=futures.ThreadPoolExecutor(max_workers=2),
+    )
+    health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
+
+    # Use a daemon thread to monitor health of your service
+    toggle_health_status_thread = threading.Thread(
+        target=_check_health,
+        args=(health_servicer, "demo.WeatherStation"),
+        daemon=True,
+    )
+    toggle_health_status_thread.start()
+    return health_servicer
