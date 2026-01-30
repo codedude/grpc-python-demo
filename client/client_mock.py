@@ -1,10 +1,14 @@
 import grpc
 import time
+import logging
 from typing import Generator
 
 import pb.demo_pb2_grpc as pb_demo
 import pb.sub.sub_demo_pb2 as pb_sub_demo
 import helpers
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 
 class WeatherStationStubMock(pb_demo.WeatherStationStub):

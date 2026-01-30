@@ -1,6 +1,7 @@
 googleapis-common-protos==1.72.0
 grpcio==1.76.0
 grpcio-health-checking==1.76.0
+grpcio-testing==1.76.0
 grpcio-tools==1.76.0
 iniconfig==2.3.0
 packaging==25.0

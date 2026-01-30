@@ -24,6 +24,9 @@ make start_client ARGS="simple"
 ### gRPC
 
 - Server interceptor
+- Mock server
+https://stackoverflow.com/questions/44718078/how-to-write-a-grpc-python-unittest
+https://pypi.org/project/pytest-grpc/
 
 ### Protocol Buffers
 
