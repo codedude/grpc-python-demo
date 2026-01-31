@@ -78,7 +78,9 @@ def health_check(app_client: grpc_client.WeatherStationClient) -> None:
 
 if __name__ == "__main__":
     app_client = grpc_client.WeatherStationClient(host="[::]", port="4242")
-    if not app_client.instantiate(stub=WeatherStationStubMock):
+    # r = app_client.instantiate(stub=WeatherStationStubMock)
+    r = app_client.instantiate()
+    if not r:
         logger.critical("Cannot instantiate client")
         sys.exit(1)
     parser = argparse.ArgumentParser(

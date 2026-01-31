@@ -1,4 +1,4 @@
-import grpc
+import google.protobuf.message as proto_msg
 import time
 import logging
 from typing import Generator
@@ -18,25 +18,25 @@ class WeatherStationStubMock(pb_demo.WeatherStationStub):
         self.FillMeasurements = self._FillMeasurements
         self.Monitor = self._Monitor
 
-    def _GetSnapshot(self, request: grpc.Message, **params) -> helpers.ApiResponse:
+    def _GetSnapshot(self, request: proto_msg.Message, **params) -> helpers.ApiResponse:
         server_data = helpers.create_report(10)
         return pb_sub_demo.ReportResponse(measures=server_data.measures)
 
     def _SendMeasurements(
-        self, request: grpc.Message, **params
-    ) -> Generator[grpc.Message]:
+        self, request: proto_msg.Message, **params
+    ) -> Generator[proto_msg.Message]:
         for measure in helpers.gen_measures(10):
             yield measure
             time.sleep(1)
 
     def _FillMeasurements(
-        self, request: Generator[grpc.Message], **params
-    ) -> grpc.Message:
+        self, request: Generator[proto_msg.Message], **params
+    ) -> proto_msg.Message:
         return pb_sub_demo.ApiResponse()
 
     def _Monitor(
-        self, request: Generator[grpc.Message], **params
-    ) -> Generator[grpc.Message]:
+        self, request: Generator[proto_msg.Message], **params
+    ) -> Generator[proto_msg.Message]:
         i = 0
         for measure in helpers.gen_measures(10):
             # generate a warning every 3 measure received
