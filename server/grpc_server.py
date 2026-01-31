@@ -7,6 +7,8 @@ import grpc
 import pb.demo_pb2_grpc as pb_demo
 from server import demo_service
 
+from auth_server_interceptor import RequestHeaderValidatorInterceptor
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
@@ -24,8 +26,15 @@ class GRPCServer:
 
     def config(self) -> bool:
         try:
+            header_validator = RequestHeaderValidatorInterceptor(
+                "one-time-password",
+                "42",
+                grpc.StatusCode.UNAUTHENTICATED,
+                "Access denied!",
+            )
             self._server = grpc.server(
                 futures.ThreadPoolExecutor(max_workers=8),
+                interceptors=(header_validator,),
                 options=[
                     ("grpc.max_send_message_length", MAX_MESSAGE_LENGTH),
                     ("grpc.max_receive_message_length", MAX_MESSAGE_LENGTH),

@@ -10,7 +10,7 @@ from grpc_health.v1 import health_pb2_grpc
 
 import pb.sub.sub_demo_pb2 as pb_sub_demo
 import pb.demo_pb2_grpc as pb_demo
-
+from auth_client_interceptor import header_adder_interceptor
 import helpers
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,10 @@ class WeatherStationClient(object):
                     ("grpc.service_config", service_config_json),
                 ),
             )
-            self._stub = stub(channel)
+            auth_interceptor = header_adder_interceptor("one-time-password", "42")
+            intercept_channel = grpc.intercept_channel(channel, auth_interceptor)
+            # use intercept_channel instead of channel
+            self._stub = stub(intercept_channel)
             self._health_stub = health_pb2_grpc.HealthStub(channel)
         except Exception as e:
             logger.error(f"instantiate(): {e}")
@@ -83,7 +86,6 @@ class WeatherStationClient(object):
         except grpc.RpcError as e:
             return helpers.error_response(e)
         logger.debug("Report received from server!")
-        print(type(response))
         return helpers.success_response(response)
 
     def SendMeasurements(self) -> Generator[helpers.ApiResponse]:
@@ -93,6 +95,7 @@ class WeatherStationClient(object):
                 logger.debug(f"Received measure {i} from server")
                 yield helpers.success_response(measure)
         except grpc.RpcError as e:
+            logger.error(f"{e}")
             yield helpers.error_response(e)
         logger.debug("All measures received!")
 
@@ -103,6 +106,7 @@ class WeatherStationClient(object):
         try:
             response = self._stub.FillMeasurements(measures)
         except grpc.RpcError as e:
+            logger.error(f"{e}")
             return helpers.error_response(e)
         logger.debug("Done!")
         return helpers.success_response(response)
@@ -116,6 +120,7 @@ class WeatherStationClient(object):
                 logger.debug("Received warning from server")
                 yield helpers.success_response(response)
         except grpc.RpcError as e:
+            logger.error(f"{e}")
             yield helpers.error_response(e)
         logger.debug("Monitor ended!")
 
