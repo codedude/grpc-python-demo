@@ -24,8 +24,8 @@ class WeatherStationService(pb_demo_grpc.WeatherStationServicer):
         logger.info("Service initialized")
 
     def GetSnapshot(
-        self, request: pb_sub_demo.RequestReport, context: grpc.RpcContext
-    ) -> pb_sub_demo.ReportResponse:
+        self, request: pb_sub_demo.RequestReport, context: grpc.ServicerContext
+    ) -> pb_sub_demo.ReportResponse | None:
         """GetSnapshot, client asks a report to server"""
         authenticated = False
         for key, value in context.invocation_metadata():
@@ -64,7 +64,7 @@ class WeatherStationService(pb_demo_grpc.WeatherStationServicer):
         return report
 
     def SendMeasurements(
-        self, request, context: grpc.RpcContext
+        self, request, context: grpc.ServicerContext
     ) -> Generator[pb_sub_demo.Measure]:
         """SendMeasurements, server sends live measures to client"""
         for i, measure in enumerate(gen_measures(10)):
@@ -80,7 +80,7 @@ class WeatherStationService(pb_demo_grpc.WeatherStationServicer):
         logger.debug("All measures sent!")
 
     def FillMeasurements(
-        self, request_iterator, context: grpc.RpcContext
+        self, request_iterator, context: grpc.ServicerContext
     ) -> pb_sub_demo.ApiResponse:
         """FillMeasurements, client sends missing/new measures to server"""
         for i, measure in enumerate(request_iterator):
