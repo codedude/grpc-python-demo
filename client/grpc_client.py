@@ -9,7 +9,7 @@ from grpc_health.v1 import health_pb2
 from grpc_health.v1 import health_pb2_grpc
 
 import pb.sub.sub_demo_pb2 as pb_sub_demo
-import pb.demo_pb2_grpc as pb_demo
+import pb.demo_pb2_grpc as pb_demo_grpc
 from auth_client_interceptor import header_adder_interceptor
 import helpers
 
@@ -39,14 +39,15 @@ class WeatherStationClient(object):
     def __init__(self, host: str, port: str) -> None:
         self._host = host
         self._port = port
+        self._channel = None
         self._stub = None
         self._health_stub = None
 
-    def instantiate(self, stub=pb_demo.WeatherStationStub) -> bool:
-        if not issubclass(stub, pb_demo.WeatherStationStub):
+    def instantiate(self, stub=pb_demo_grpc.WeatherStationStub) -> bool:
+        if not issubclass(stub, pb_demo_grpc.WeatherStationStub):
             return False
         try:
-            channel = grpc.insecure_channel(
+            self._channel = grpc.insecure_channel(
                 target=f"{self._host}:{self._port}",
                 options=(
                     ("grpc.keepalive_time_ms", 8000),
@@ -58,15 +59,30 @@ class WeatherStationClient(object):
                 ),
             )
             auth_interceptor = header_adder_interceptor("one-time-password", "42")
-            intercept_channel = grpc.intercept_channel(channel, auth_interceptor)
+            intercept_channel = grpc.intercept_channel(self._channel, auth_interceptor)
             # use intercept_channel instead of channel
             self._stub = stub(intercept_channel)
-            self._health_stub = health_pb2_grpc.HealthStub(channel)
+            self._health_stub = health_pb2_grpc.HealthStub(self._channel)
         except Exception as e:
             logger.error(f"instantiate(): {e}")
             return False
         logger.info("Client is ready")
         return True
+
+    def stop(self) -> None:
+        """
+        Close the channel
+        """
+        try:
+            self._channel.close()
+        finally:
+            self._channel = None
+
+    def __del__(self) -> None:
+        """
+        Ensure Channel is properly shutdown.
+        """
+        self.stop()
 
     def GetSnapshot(
         self,

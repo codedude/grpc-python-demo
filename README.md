@@ -16,18 +16,13 @@ make build_pb
 # Start server in an other terminal
 make start_server&
 # Start client
-make start_client ARGS="simple"
+make start_client ARGS="simple -mode=normal"
+make start_client ARGS="simple -mode=mock"
 ```
 
-## TODO
+## Usefull links
 
-### gRPC
+- [gRPC website](https://grpc.io/)
+- [Protocol Buffers website](https://protobuf.dev/)
 
-- Server interceptor
-- Mock server
-https://stackoverflow.com/questions/44718078/how-to-write-a-grpc-python-unittest
-https://pypi.org/project/pytest-grpc/
-
-### Protocol Buffers
-
-- code examples in presentation
+- [pytest-grpc plugin (not maintained)](https://github.com/kataev/pytest-grpc)

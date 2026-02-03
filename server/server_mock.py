@@ -1,74 +1,54 @@
 import logging
 import grpc_testing
+import grpc
+import demo_service
+
+from typing import Generator
+import pb.sub.sub_demo_pb2 as pb_sub_demo
+import pb.demo_pb2 as pb_demo
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
-class GRPCServerMock(grpc_testing.Server):
-    def invoke_unary_unary(
-        self, method_descriptor, invocation_metadata, request, timeout
-    ):
-        """Invokes an RPC to be serviced by the system under test.
+class WeatherStationServerMock:
+    def __init__(self):
+        self._service = pb_demo.DESCRIPTOR.services_by_name["WeatherStation"]
+        self._server = grpc_testing.server_from_dictionary(
+            {self._service: demo_service.WeatherStationService()},
+            grpc_testing.strict_real_time(),
+        )
 
-        Args:
-          method_descriptor: A descriptor.MethodDescriptor describing a unary-unary
-            RPC method.
-          invocation_metadata: The RPC's invocation metadata.
-          request: The RPC's request.
-          timeout: A duration of time in seconds for the RPC or None to
-            indicate that the RPC has no time limit.
+    def GetSnapshot(
+        self, request: pb_sub_demo.RequestReport
+    ) -> pb_sub_demo.ReportResponse:
+        method = self._server.invoke_unary_unary(
+            method_descriptor=(self._service.methods_by_name["GetSnapshot"]),
+            invocation_metadata=(("accesstoken", "montreal-python"),),
+            request=request,
+            timeout=1,
+        )
+        response, metadata, code, details = method.termination()
+        if code.value[0] != 0 or len(details) != 0:
+            raise RuntimeError(grpc.RpcError({"code": code, "details": details}))
+        return response
 
-        Returns:
-          A UnaryUnaryServerRpc with which to "play client" for the RPC.
-        """
-        print(method_descriptor, request)
-        pass
-
-    def invoke_unary_stream(
-        self, method_descriptor, invocation_metadata, request, timeout
-    ):
-        """Invokes an RPC to be serviced by the system under test.
-
-        Args:
-          method_descriptor: A descriptor.MethodDescriptor describing a unary-stream
-            RPC method.
-          invocation_metadata: The RPC's invocation metadata.
-          request: The RPC's request.
-          timeout: A duration of time in seconds for the RPC or None to
-            indicate that the RPC has no time limit.
-
-        Returns:
-          A UnaryStreamServerRpc with which to "play client" for the RPC.
-        """
-        pass
-
-    def invoke_stream_unary(self, method_descriptor, invocation_metadata, timeout):
-        """Invokes an RPC to be serviced by the system under test.
-
-        Args:
-          method_descriptor: A descriptor.MethodDescriptor describing a stream-unary
-            RPC method.
-          invocation_metadata: The RPC's invocation metadata.
-          timeout: A duration of time in seconds for the RPC or None to
-            indicate that the RPC has no time limit.
-
-        Returns:
-          A StreamUnaryServerRpc with which to "play client" for the RPC.
-        """
-        pass
-
-    def invoke_stream_stream(self, method_descriptor, invocation_metadata, timeout):
-        """Invokes an RPC to be serviced by the system under test.
-
-        Args:
-          method_descriptor: A descriptor.MethodDescriptor describing a stream-stream
-            RPC method.
-          invocation_metadata: The RPC's invocation metadata.
-          timeout: A duration of time in seconds for the RPC or None to
-            indicate that the RPC has no time limit.
-
-        Returns:
-          A StreamStreamServerRpc with which to "play client" for the RPC.
-        """
-        pass
+    def SendMeasurements(self) -> Generator[pb_sub_demo.ReportResponse]:
+        method = self._server.invoke_unary_stream(
+            method_descriptor=(self._service.methods_by_name["SendMeasurements"]),
+            invocation_metadata=(("accesstoken", "montreal-python"),),
+            request=None,
+            timeout=None,
+        )
+        while True:
+            try:
+                r = method.take_response()
+            except Exception as e:
+                logger.error(e)
+                r = None
+            if r is None:
+                break
+            yield r
+        metadata, code, details = method.termination()
+        if code.value[0] != 0 or len(details) != 0:
+            raise RuntimeError(grpc.RpcError({"code": code, "details": details}))

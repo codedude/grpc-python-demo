@@ -4,7 +4,7 @@ from grpc_health.v1 import health
 
 import grpc
 
-import pb.demo_pb2_grpc as pb_demo
+import pb.demo_pb2_grpc as pb_demo_grpc
 from server import demo_service
 
 from auth_server_interceptor import RequestHeaderValidatorInterceptor
@@ -23,6 +23,7 @@ class GRPCServer:
     def __init__(self, host: str, port: str) -> None:
         self._host: str = host
         self._port: str = port
+        self._server: grpc.Server = None
 
     def config(self) -> bool:
         try:
@@ -72,7 +73,7 @@ class GRPCServer:
         logger.info("GRPC server has terminated")
         return True
 
-    def stop(self, from_del=False) -> None:
+    def stop(self, from_del: bool = False) -> None:
         """
         Gracefuylly stop the server
         """
@@ -107,10 +108,10 @@ class WeatherStationServer(GRPCServer):
         self._health_servicer: health.HealthServicer = None
 
     def add_weather_station_service(
-        self, service: pb_demo.WeatherStationServicer
+        self, service: pb_demo_grpc.WeatherStationServicer
     ) -> bool:
         try:
-            pb_demo.add_WeatherStationServicer_to_server(service, self._server)
+            pb_demo_grpc.add_WeatherStationServicer_to_server(service, self._server)
         except Exception as e:
             logger.error(f"Cannot add servicer to the server: {e}")
             return False

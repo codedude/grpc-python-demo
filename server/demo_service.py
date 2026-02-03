@@ -11,7 +11,7 @@ from grpc_health.v1 import health_pb2
 from grpc_health.v1 import health_pb2_grpc
 
 import pb.sub.sub_demo_pb2 as pb_sub_demo
-import pb.demo_pb2_grpc as pb_demo
+import pb.demo_pb2_grpc as pb_demo_grpc
 
 from helpers import create_report, gen_measures
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
-class WeatherStationService(pb_demo.WeatherStationServicer):
+class WeatherStationService(pb_demo_grpc.WeatherStationServicer):
     def __init__(self):
         logger.info("Service initialized")
 
@@ -63,12 +63,19 @@ class WeatherStationService(pb_demo.WeatherStationServicer):
         logger.debug("Report ready to send!")
         return report
 
-    def SendMeasurements(self, request, context: grpc.RpcContext) -> None:
+    def SendMeasurements(
+        self, request, context: grpc.RpcContext
+    ) -> Generator[pb_sub_demo.Measure]:
         """SendMeasurements, server sends live measures to client"""
         for i, measure in enumerate(gen_measures(10)):
             logger.debug(f"Sending measure {i} to client...")
             yield measure
             time.sleep(1)
+            # context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            # context.set_details(
+            #     "start_time must be old than now, and different from end_time"
+            # )
+            # return None
         context.set_code(grpc.StatusCode.OK)
         logger.debug("All measures sent!")
 
@@ -84,7 +91,7 @@ class WeatherStationService(pb_demo.WeatherStationServicer):
 
     def Monitor(
         self, request_iterator: Generator[pb_sub_demo.Measure], context
-    ) -> None:
+    ) -> Generator[pb_sub_demo.WarningResponse]:
         """Monitor, client sends live measures, server responds with live warning"""
         logger.debug("Start Monitor...")
         for i, measure in enumerate(request_iterator):

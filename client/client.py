@@ -77,16 +77,17 @@ def health_check(app_client: grpc_client.WeatherStationClient) -> None:
 
 
 if __name__ == "__main__":
-    app_client = grpc_client.WeatherStationClient(host="[::]", port="4242")
-    # r = app_client.instantiate(stub=WeatherStationStubMock)
-    r = app_client.instantiate()
-    if not r:
-        logger.critical("Cannot instantiate client")
-        sys.exit(1)
     parser = argparse.ArgumentParser(
         prog="WeatherStation Client",
         description="What is the weather today?",
         epilog="Demo done for Montreal Python",
+    )
+    parser.add_argument(
+        "-mode",
+        help="Normal or test mode",
+        default="normal",
+        type=str,
+        choices=["normal", "mock"],
     )
     parser.add_argument(
         "action",
@@ -103,6 +104,14 @@ if __name__ == "__main__":
         ],
     )
     args = parser.parse_args()
+    app_client = grpc_client.WeatherStationClient(host="[::]", port="4242")
+    if args.mode == "normal":
+        r = app_client.instantiate()
+    else:
+        r = app_client.instantiate(stub=WeatherStationStubMock)
+    if not r:
+        logger.critical("Cannot instantiate client")
+        sys.exit(1)
     match args.action:
         case "simple":
             get_snapshot(app_client)

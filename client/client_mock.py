@@ -3,7 +3,7 @@ import time
 import logging
 from typing import Generator
 
-import pb.demo_pb2_grpc as pb_demo
+import pb.demo_pb2_grpc as pb_demo_grpc
 import pb.sub.sub_demo_pb2 as pb_sub_demo
 import helpers
 
@@ -11,14 +11,16 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
-class WeatherStationStubMock(pb_demo.WeatherStationStub):
+class WeatherStationStubMock(pb_demo_grpc.WeatherStationStub):
     def __init__(self, channel):
         self.GetSnapshot = self._GetSnapshot
         self.SendMeasurements = self._SendMeasurements
         self.FillMeasurements = self._FillMeasurements
         self.Monitor = self._Monitor
 
-    def _GetSnapshot(self, request: proto_msg.Message, **params) -> helpers.ApiResponse:
+    def _GetSnapshot(
+        self, request: proto_msg.Message, **params
+    ) -> pb_sub_demo.ReportResponse:
         server_data = helpers.create_report(10)
         return pb_sub_demo.ReportResponse(measures=server_data.measures)
 
