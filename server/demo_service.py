@@ -31,33 +31,28 @@ class WeatherStationService(pb_demo_grpc.WeatherStationServicer):
         for key, value in context.invocation_metadata():
             if key == "accesstoken":
                 if value != "montreal-python":
-                    context.set_code(grpc.StatusCode.UNAUTHENTICATED)
-                    context.set_details("bad access token")
-                    return None
+                    context.abort(grpc.StatusCode.UNAUTHENTICATED, "bad access token")
                 else:
                     authenticated = True
         if not authenticated:
-            context.set_code(grpc.StatusCode.UNAUTHENTICATED)
-            context.set_details("no access token")
-            return None
+            context.abort(grpc.StatusCode.UNAUTHENTICATED, "no access token")
         if (
             not request.start_time.IsInitialized()
             or not request.end_time.IsInitialized()
         ):
-            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details("start_time and end_time must be set")
-            return None
+            context.abort(
+                grpc.StatusCode.INVALID_ARGUMENT, "start_time and end_time must be set"
+            )
         start_time = request.start_time.ToDatetime(tzinfo=datetime.timezone.utc)
         end_time = request.end_time.ToDatetime(tzinfo=datetime.timezone.utc)
         if (
             start_time >= datetime.datetime.now(datetime.timezone.utc)
             or end_time <= start_time
         ):
-            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details(
-                "start_time must be old than now, and different from end_time"
+            context.abort(
+                grpc.StatusCode.UNAUTHENTICATED,
+                "start_time must be old than now, and different from end_time",
             )
-            return None
         report = create_report(10)
         context.set_code(grpc.StatusCode.OK)
         logger.debug("Report ready to send!")
@@ -71,11 +66,6 @@ class WeatherStationService(pb_demo_grpc.WeatherStationServicer):
             logger.debug(f"Sending measure {i} to client...")
             yield measure
             time.sleep(1)
-            # context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            # context.set_details(
-            #     "start_time must be old than now, and different from end_time"
-            # )
-            # return None
         context.set_code(grpc.StatusCode.OK)
         logger.debug("All measures sent!")
 
