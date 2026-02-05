@@ -1,6 +1,7 @@
 import sys
 import json
 import marshal
+import gzip
 import logging
 
 # The google API has some features like helpers, builders, reflection...
@@ -33,11 +34,14 @@ def main():
     json_pretty_out = json_format.MessageToJson(report)
     json_python = json.loads(json_pretty_out)
     json_mini_out = json.dumps(json_python, indent=None, separators=(",", ":"))
+    json_gzip_out = gzip.compress(json_mini_out.encode("utf-8"))
     json_marshal_out = marshal.dumps(json_python)
     print(f"JSON str prettyfy:\t{len(json_pretty_out)} bytes")
     print(f"JSON str minify\t\t{len(json_mini_out)} bytes")
-    print(f"Python Marshal bin:\t{len(json_marshal_out)} bytes")
-    print(f"Protocol Buffer bin:\t{len(pb_bin_out)} bytes")
+    print(f"JSON Marshal:\t\t{len(json_marshal_out)} bytes")
+    print(f"JSON minify gzip:\t{len(json_gzip_out)} bytes")
+    print(f"Protocol Buffer:\t{len(pb_bin_out)} bytes")
+    print(f"Protocol Buffer gzip:\t{len(gzip.compress(pb_bin_out))} bytes")
     # Convert binary back to json
     new_report = ReportResponse()
     new_report.ParseFromString(pb_bin_out)

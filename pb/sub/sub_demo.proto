@@ -6,11 +6,15 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/any.proto";
 
-enum ActionType{
+enum ActionType {
   ACTION_TYPE_UNKNOWN = 0;
   ACTION_TYPE_RESTART = 1;
   ACTION_TYPE_STOP    = 2;
   ACTION_TYPE_DELETE  = 3;
+}
+
+message RequestAction {
+  ActionType action = 1;
 }
 
 enum WarningMsgType {
@@ -23,7 +27,7 @@ enum WarningMsgType {
 message Measure {
   optional float            temp     = 1;
   optional uint32           humidity = 2;
-  int32            pressure = 3;
+  int32                     pressure = 3;
   google.protobuf.Timestamp time     = 4;
 }
 
@@ -54,10 +58,6 @@ message RequestSetConfig {
     google.protobuf.Timestamp time     = 2;
   }
   map<string, Measure> data = 3;
-}
-
-message RequestAction {
-  ActionType action = 1;
 }
 
 message ApiResponse {

@@ -21,5 +21,4 @@ service WeatherStation {
   rpc FillMeasurements (stream Measure) returns (ApiResponse) {};
   // Monitor, client sends live measures, server responds with live warning
   rpc Monitor (stream Measure) returns (stream WarningResponse) {};
-
 }
